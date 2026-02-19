@@ -1,0 +1,708 @@
+openapi: 3.1.0
+info:
+  title: CampusCast Distributed Media CMS — API Gateway
+  version: 0.1.0
+  description: |
+    External REST API for the Distributed Media CMS.
+    All endpoints require HTTPS. Auth via Bearer JWT.
+servers:
+  - url: https://localhost:3000/api/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Zones
+  - name: Devices
+  - name: Content
+  - name: Schedule
+  - name: Player
+  - name: Audit
+
+paths:
+  # ── Auth ──
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: JWT tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+
+  # ── Zones ──
+  /zones:
+    get:
+      tags: [Zones]
+      summary: List zones (admin)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Zones list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Zone' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+
+  /zones/{zoneId}/policy:
+    get:
+      tags: [Zones]
+      summary: Get policy for zone
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Zone policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZonePolicy'
+
+  # ── Devices ──
+  /devices/enroll:
+    post:
+      tags: [Devices]
+      summary: Enroll a new device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollDeviceRequest'
+      responses:
+        '201':
+          description: Device enrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollDeviceResponse'
+
+  /devices/{deviceId}:
+    get:
+      tags: [Devices]
+      summary: Get device info
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Device details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  /devices/{deviceId}/assign:
+    put:
+      tags: [Devices]
+      summary: Assign device to group
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [group_id]
+              properties:
+                group_id: { type: string }
+      responses:
+        '200':
+          description: Updated device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  # ── Content ──
+  /content/init-upload:
+    post:
+      tags: [Content]
+      summary: Initialize content upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitUploadRequest'
+      responses:
+        '200':
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitUploadResponse'
+
+  /content/{assetId}/complete:
+    post:
+      tags: [Content]
+      summary: Complete upload with hash verification
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sha256_hash]
+              properties:
+                sha256_hash: { type: string }
+      responses:
+        '200':
+          description: Asset ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAsset'
+
+  /content:
+    get:
+      tags: [Content]
+      summary: List content assets
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Content list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ContentAsset' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+
+  # ── Schedule ──
+  /schedules:
+    post:
+      tags: [Schedule]
+      summary: Create schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [zone_id, name]
+              properties:
+                zone_id: { type: string }
+                name: { type: string }
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+    get:
+      tags: [Schedule]
+      summary: List schedules
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Schedule list
+
+  /schedules/{scheduleId}/lock:
+    post:
+      tags: [Schedule]
+      summary: Acquire edit lock (core/locking mode)
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl_seconds: { type: integer, default: 300 }
+      responses:
+        '200':
+          description: Lock result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockResponse'
+
+  /schedules/{scheduleId}/lock:
+    delete:
+      tags: [Schedule]
+      summary: Release edit lock
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lock_token]
+              properties:
+                lock_token: { type: string }
+      responses:
+        '200':
+          description: Lock released
+
+  /schedules/{scheduleId}/ops:
+    post:
+      tags: [Schedule]
+      summary: Ingest CRDT operations (CRDT mode)
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ops]
+              properties:
+                ops:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ScheduleOp'
+      responses:
+        '200':
+          description: Ingest result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestOpsResponse'
+
+  /schedules/{scheduleId}/publish:
+    post:
+      tags: [Schedule]
+      summary: Publish schedule version
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version_number]
+              properties:
+                version_number: { type: integer }
+                target_group_ids: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Publish result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+
+  /schedules/{scheduleId}/validate:
+    post:
+      tags: [Schedule]
+      summary: Pre-publish validation
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+
+  # ── Player ──
+  /player/release:
+    get:
+      tags: [Player]
+      summary: Get latest release for device
+      parameters:
+        - name: device_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Release metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+
+  /player/manifest/{releaseId}:
+    get:
+      tags: [Player]
+      summary: Get signed manifest
+      parameters:
+        - name: releaseId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Signed manifest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+
+  /player/telemetry:
+    post:
+      tags: [Player]
+      summary: Report player telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryReport'
+      responses:
+        '204':
+          description: Accepted
+
+  # ── Audit ──
+  /audit:
+    get:
+      tags: [Audit]
+      summary: Query audit events
+      parameters:
+        - name: zone_id
+          in: query
+          schema: { type: string }
+        - name: resource_type
+          in: query
+          schema: { type: string }
+        - name: resource_id
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Audit events
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1 }
+    PageSize:
+      name: page_size
+      in: query
+      schema: { type: integer, default: 20, maximum: 100 }
+
+  schemas:
+    TokenPair:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer }
+
+    Zone:
+      type: object
+      properties:
+        zone_id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        created_at: { type: string, format: date-time }
+
+    ZonePolicy:
+      type: object
+      properties:
+        zone_id: { type: string }
+        max_schedule_slots: { type: integer }
+        max_content_size_mb: { type: integer }
+        crdt_enabled: { type: boolean }
+        max_ops_per_minute: { type: integer }
+        max_batch_size: { type: integer }
+
+    EnrollDeviceRequest:
+      type: object
+      required: [device_name, device_type, zone_id, group_id]
+      properties:
+        device_name: { type: string }
+        device_type: { type: string, enum: [android_tv, desktop, web] }
+        hardware_id: { type: string }
+        zone_id: { type: string }
+        group_id: { type: string }
+
+    EnrollDeviceResponse:
+      type: object
+      properties:
+        device_id: { type: string }
+        device_token: { type: string }
+        mqtt_client_id: { type: string }
+        mqtt_topic_prefix: { type: string }
+
+    Device:
+      type: object
+      properties:
+        device_id: { type: string }
+        device_name: { type: string }
+        device_type: { type: string }
+        zone_id: { type: string }
+        group_id: { type: string }
+        status: { type: string, enum: [pending, active, revoked, offline] }
+
+    InitUploadRequest:
+      type: object
+      required: [zone_id, filename, content_type, file_size]
+      properties:
+        zone_id: { type: string }
+        filename: { type: string }
+        content_type: { type: string }
+        file_size: { type: integer }
+
+    InitUploadResponse:
+      type: object
+      properties:
+        asset_id: { type: string }
+        upload_url: { type: string, format: uri }
+        expires_at: { type: string, format: date-time }
+
+    ContentAsset:
+      type: object
+      properties:
+        asset_id: { type: string }
+        zone_id: { type: string }
+        filename: { type: string }
+        content_type: { type: string }
+        file_size: { type: integer }
+        sha256_hash: { type: string }
+        status: { type: string, enum: [uploading, ready, deleted] }
+        signature: { type: string }
+        key_id: { type: string }
+
+    Schedule:
+      type: object
+      properties:
+        schedule_id: { type: string }
+        zone_id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [draft, locked, published] }
+        current_version: { type: integer }
+
+    ScheduleOp:
+      type: object
+      required: [op_type, causal, slot]
+      properties:
+        op_type: { type: string, enum: [add_slot, remove_slot, update_slot, move_slot] }
+        causal:
+          type: object
+          required: [operation_id, client_id, lamport_ts]
+          properties:
+            operation_id: { type: string, format: uuid }
+            client_id: { type: string }
+            lamport_ts: { type: integer }
+            vector_clock: { type: object }
+            parent_op_id: { type: string }
+            session_id: { type: string }
+        signature:
+          type: object
+          properties:
+            signature: { type: string }
+            key_id: { type: string }
+            algorithm: { type: string }
+        slot:
+          type: object
+          properties:
+            slot_id: { type: string }
+            asset_id: { type: string }
+            start_time: { type: string, format: date-time }
+            end_time: { type: string, format: date-time }
+            priority: { type: integer }
+            zone_id: { type: string }
+            group_id: { type: string }
+
+    IngestOpsResponse:
+      type: object
+      properties:
+        accepted: { type: integer }
+        rejected: { type: integer }
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              operation_id: { type: string }
+              accepted: { type: boolean }
+              reason: { type: string }
+              explanation: { type: string }
+
+    LockResponse:
+      type: object
+      properties:
+        acquired: { type: boolean }
+        lock_token: { type: string }
+        locked_by: { type: string }
+        expires_at: { type: string, format: date-time }
+
+    PublishResponse:
+      type: object
+      properties:
+        release_id: { type: string }
+        validation_passed: { type: boolean }
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+
+    ValidationResult:
+      type: object
+      properties:
+        valid: { type: boolean }
+        has_fatal: { type: boolean }
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+
+    ValidationIssue:
+      type: object
+      properties:
+        severity: { type: string, enum: [error, warning, info] }
+        code: { type: string }
+        message: { type: string }
+        slot_id: { type: string }
+
+    Release:
+      type: object
+      properties:
+        release_id: { type: string }
+        schedule_id: { type: string }
+        version_number: { type: integer }
+        zone_id: { type: string }
+        manifest_url: { type: string }
+        manifest_signature: { type: string }
+        manifest_key_id: { type: string }
+        status: { type: string, enum: [pending, rolling_out, active, rolled_back] }
+
+    Manifest:
+      type: object
+      properties:
+        release_id: { type: string }
+        schedule_id: { type: string }
+        zone_id: { type: string }
+        version: { type: integer }
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              asset_id: { type: string }
+              filename: { type: string }
+              sha256_hash: { type: string }
+              download_url: { type: string }
+              size: { type: integer }
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleOp/properties/slot'
+        signature: { type: string }
+        key_id: { type: string }
+
+    TelemetryReport:
+      type: object
+      required: [device_id]
+      properties:
+        device_id: { type: string }
+        current_release_id: { type: string }
+        playback_status: { type: string }
+        uptime_seconds: { type: integer }
+        errors: { type: array, items: { type: string } }
+
+    Pagination:
+      type: object
+      properties:
+        total: { type: integer }
+        page: { type: integer }
+        page_size: { type: integer }

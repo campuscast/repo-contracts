@@ -1,0 +1,16 @@
+{
+  "name": "@campuscast/contracts",
+  "version": "0.1.0",
+  "description": "Shared contracts: Protobuf definitions, OpenAPI specs, JSON schemas for Distributed Media CMS",
+  "scripts": {
+    "proto:generate": "bash scripts/generate-proto.sh",
+    "openapi:validate": "npx @redocly/cli lint openapi/gateway.yaml",
+    "schemas:validate": "npx ajv-cli validate -s json-schemas/operations/schedule-op.schema.json -d json-schemas/operations/example-op.json"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.25.0",
+    "grpc-tools": "^1.12.4",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "ajv-cli": "^5.0.0"
+  }
+}

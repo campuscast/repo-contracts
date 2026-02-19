@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package campuscast.common;
+
+option java_multiple_files = true;
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PaginatedResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  string field = 3;
+}
+
+message ZoneRef {
+  string zone_id = 1;
+}
+
+message DeviceRef {
+  string device_id = 1;
+}
+
+message UserRef {
+  string user_id = 1;
+}
+
+// Causal metadata for CRDT operations
+message CausalMetadata {
+  string operation_id = 1;       // globally unique op id
+  string client_id = 2;          // device or user session id
+  int64 lamport_ts = 3;          // lamport timestamp
+  map<string, int64> vector_clock = 4; // vector clock entries
+  string parent_op_id = 5;       // causal parent
+  string session_id = 6;
+}
+
+// Signature wrapper
+message OperationSignature {
+  bytes signature = 1;
+  string key_id = 2;
+  string algorithm = 3;          // e.g. "Ed25519", "HMAC-SHA256"
+}

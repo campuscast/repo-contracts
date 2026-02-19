@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/audit-event",
+  "title": "AuditEvent",
+  "type": "object",
+  "required": ["event_type", "actor_type", "actor_id", "action", "timestamp"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "schedule.ops_merged", "schedule.published", "schedule.lock_acquired", "schedule.lock_released",
+        "schedule.invariant_violation", "schedule.auto_transform",
+        "content.uploaded", "content.deleted", "content.signature_verified",
+        "device.enrolled", "device.revoked", "device.key_bound",
+        "auth.login", "auth.logout", "auth.mfa_verified", "auth.token_refreshed",
+        "security.rate_limited", "security.quota_exceeded", "security.signature_invalid",
+        "security.schema_invalid", "security.access_denied",
+        "sync.ops_accepted", "sync.ops_rejected", "sync.compensating_ops",
+        "player.release_applied", "player.telemetry"
+      ]
+    },
+    "actor_type": { "type": "string", "enum": ["user", "device", "system"] },
+    "actor_id": { "type": "string" },
+    "zone_id": { "type": "string" },
+    "resource_type": { "type": "string" },
+    "resource_id": { "type": "string" },
+    "action": { "type": "string" },
+    "detail": { "type": "object" },
+    "causal_chain": { "type": "string" },
+    "session_id": { "type": "string" },
+    "correlation_id": { "type": "string" },
+    "ip_address": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

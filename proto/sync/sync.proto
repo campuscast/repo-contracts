@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package campuscast.sync;
+
+import "common.proto";
+import "schedule/schedule.proto";
+
+service SyncService {
+  // Called by Schedule Service to apply ops/snapshots
+  rpc ApplyOps(ApplyOpsRequest) returns (ApplyOpsResponse);
+  rpc RequestSnapshot(RequestSnapshotRequest) returns (RequestSnapshotResponse);
+}
+
+message ApplyOpsRequest {
+  string schedule_id = 1;
+  repeated campuscast.schedule.ScheduleOp ops = 2;
+  string correlation_id = 3;
+}
+
+message ApplyOpsResponse {
+  bool success = 1;
+  int32 distributed_to = 2;       // number of WS clients notified
+  int32 mqtt_published = 3;       // number of MQTT topics published
+}
+
+message RequestSnapshotRequest {
+  string schedule_id = 1;
+}
+
+message RequestSnapshotResponse {
+  campuscast.schedule.ScheduleSnapshot snapshot = 1;
+}
+
+// WebSocket message types (used in WS protocol, not gRPC)
+// Defined here for documentation purposes
+
+// Client -> Server
+message WsInboundMessage {
+  string type = 1;                // "ops_batch", "sync_request", "heartbeat"
+  string schedule_id = 2;
+  repeated campuscast.schedule.ScheduleOp ops = 3;
+  campuscast.common.OperationSignature batch_signature = 4;
+  string correlation_id = 5;
+}
+
+// Server -> Client
+message WsOutboundMessage {
+  string type = 1;                // "ops_applied", "ops_rejected", "snapshot", "compensating", "heartbeat_ack"
+  string schedule_id = 2;
+  repeated campuscast.schedule.ScheduleOp ops = 3;
+  repeated campuscast.schedule.OpResult results = 4;
+  campuscast.schedule.ScheduleSnapshot snapshot = 5;
+  string correlation_id = 6;
+  string error = 7;
+}

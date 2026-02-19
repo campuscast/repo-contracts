@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package campuscast.audit;
+
+import "common.proto";
+
+service AuditService {
+  rpc AppendEvent(AppendEventRequest) returns (AppendEventResponse);
+  rpc QueryEvents(QueryEventsRequest) returns (QueryEventsResponse);
+}
+
+message AuditEvent {
+  string event_id = 1;
+  string event_type = 2;          // "schedule.ops_merged", "content.uploaded", "device.enrolled", "auth.login", "security.rate_limited"
+  string actor_type = 3;          // "user", "device", "system"
+  string actor_id = 4;
+  string zone_id = 5;
+  string resource_type = 6;       // "schedule", "content", "device", "zone"
+  string resource_id = 7;
+  string action = 8;              // "create", "update", "delete", "merge", "reject", "compensate", "publish"
+  string detail = 9;              // JSON detail payload
+  string causal_chain = 10;       // serialized causal chain for CRDT ops
+  string session_id = 11;
+  string correlation_id = 12;
+  string ip_address = 13;
+  campuscast.common.Timestamp timestamp = 14;
+}
+
+message AppendEventRequest {
+  AuditEvent event = 1;
+}
+
+message AppendEventResponse {
+  bool success = 1;
+  string event_id = 2;
+}
+
+message QueryEventsRequest {
+  string zone_id = 1;
+  string resource_type = 2;
+  string resource_id = 3;
+  string event_type = 4;
+  string actor_id = 5;
+  campuscast.common.Timestamp from = 6;
+  campuscast.common.Timestamp to = 7;
+  campuscast.common.Pagination pagination = 8;
+}
+
+message QueryEventsResponse {
+  repeated AuditEvent events = 1;
+  campuscast.common.PaginatedResponse pagination = 2;
+}

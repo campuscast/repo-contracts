@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package campuscast.zone;
+
+import "common.proto";
+
+service ZonePolicyService {
+  rpc GetZone(GetZoneRequest) returns (Zone);
+  rpc ListZones(ListZonesRequest) returns (ListZonesResponse);
+  rpc GetPolicyForZone(GetPolicyRequest) returns (ZonePolicy);
+  rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
+}
+
+message GetZoneRequest {
+  string zone_id = 1;
+}
+
+message Zone {
+  string zone_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated ScreenGroup groups = 4;
+  campuscast.common.Timestamp created_at = 5;
+  campuscast.common.Timestamp updated_at = 6;
+}
+
+message ScreenGroup {
+  string group_id = 1;
+  string zone_id = 2;
+  string name = 3;
+  repeated string device_ids = 4;
+}
+
+message ListZonesRequest {
+  campuscast.common.Pagination pagination = 1;
+}
+
+message ListZonesResponse {
+  repeated Zone zones = 1;
+  campuscast.common.PaginatedResponse pagination = 2;
+}
+
+message GetPolicyRequest {
+  string zone_id = 1;
+}
+
+message ZonePolicy {
+  string zone_id = 1;
+  int32 max_schedule_slots = 2;
+  int32 max_content_size_mb = 3;
+  repeated string allowed_content_types = 4;
+  bool crdt_enabled = 5;
+  int32 max_ops_per_minute = 6;
+  int32 max_batch_size = 7;
+  repeated PriorityRule priority_rules = 8;
+  campuscast.common.Timestamp updated_at = 9;
+}
+
+message PriorityRule {
+  string rule_id = 1;
+  int32 priority = 2;
+  string description = 3;
+}
+
+message CheckAccessRequest {
+  string user_id = 1;
+  string zone_id = 2;
+  string action = 3;               // e.g. "schedule:write", "content:upload"
+  string resource_id = 4;
+}
+
+message CheckAccessResponse {
+  bool allowed = 1;
+  string reason = 2;
+}

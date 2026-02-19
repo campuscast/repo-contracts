@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package campuscast.signing;
+
+import "common.proto";
+
+service SigningKmsService {
+  rpc SignData(SignDataRequest) returns (SignDataResponse);
+  rpc VerifySignature(VerifySignatureRequest) returns (VerifySignatureResponse);
+  rpc GetPublicKey(GetPublicKeyRequest) returns (PublicKeyResponse);
+  rpc RotateKey(RotateKeyRequest) returns (RotateKeyResponse);
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+}
+
+message SignDataRequest {
+  bytes data = 1;
+  string key_id = 2;              // empty = use current active key
+  string purpose = 3;             // "content", "manifest", "operation"
+}
+
+message SignDataResponse {
+  bytes signature = 1;
+  string key_id = 2;
+  string algorithm = 3;
+}
+
+message VerifySignatureRequest {
+  bytes data = 1;
+  bytes signature = 2;
+  string key_id = 3;
+}
+
+message VerifySignatureResponse {
+  bool valid = 1;
+  string reason = 2;
+}
+
+message GetPublicKeyRequest {
+  string key_id = 1;
+}
+
+message PublicKeyResponse {
+  string key_id = 1;
+  bytes public_key = 2;
+  string algorithm = 3;
+  campuscast.common.Timestamp created_at = 4;
+  campuscast.common.Timestamp expires_at = 5;
+}
+
+message RotateKeyRequest {
+  string purpose = 1;
+}
+
+message RotateKeyResponse {
+  string new_key_id = 1;
+  string old_key_id = 2;
+}
+
+message ListKeysRequest {
+  string purpose = 1;
+}
+
+message ListKeysResponse {
+  repeated PublicKeyResponse keys = 1;
+}

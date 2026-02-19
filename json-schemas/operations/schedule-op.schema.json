@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/schedule-op",
+  "title": "ScheduleOperation",
+  "description": "A single CRDT operation on a schedule",
+  "type": "object",
+  "required": ["op_type", "causal", "slot"],
+  "properties": {
+    "op_type": {
+      "type": "string",
+      "enum": ["add_slot", "remove_slot", "update_slot", "move_slot"]
+    },
+    "causal": {
+      "$ref": "#/$defs/CausalMetadata"
+    },
+    "signature": {
+      "$ref": "#/$defs/OperationSignature"
+    },
+    "slot": {
+      "$ref": "#/$defs/ScheduleSlot"
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "CausalMetadata": {
+      "type": "object",
+      "required": ["operation_id", "client_id", "lamport_ts"],
+      "properties": {
+        "operation_id": { "type": "string", "format": "uuid" },
+        "client_id": { "type": "string" },
+        "lamport_ts": { "type": "integer", "minimum": 0 },
+        "vector_clock": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "parent_op_id": { "type": "string" },
+        "session_id": { "type": "string" }
+      }
+    },
+    "OperationSignature": {
+      "type": "object",
+      "required": ["signature", "key_id", "algorithm"],
+      "properties": {
+        "signature": { "type": "string", "description": "base64-encoded signature" },
+        "key_id": { "type": "string" },
+        "algorithm": { "type": "string", "enum": ["Ed25519", "HMAC-SHA256"] }
+      }
+    },
+    "ScheduleSlot": {
+      "type": "object",
+      "required": ["slot_id", "start_time", "end_time"],
+      "properties": {
+        "slot_id": { "type": "string", "format": "uuid" },
+        "asset_id": { "type": "string" },
+        "start_time": { "type": "string", "format": "date-time" },
+        "end_time": { "type": "string", "format": "date-time" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "zone_id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

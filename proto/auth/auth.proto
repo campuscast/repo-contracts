@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package campuscast.auth;
+
+import "common.proto";
+
+service AuthService {
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUserClaims(GetUserClaimsRequest) returns (UserClaims);
+  rpc ValidateDeviceToken(ValidateDeviceTokenRequest) returns (DeviceTokenClaims);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  UserClaims claims = 2;
+}
+
+message GetUserClaimsRequest {
+  string user_id = 1;
+}
+
+message UserClaims {
+  string user_id = 1;
+  string email = 2;
+  repeated string roles = 3;           // e.g. ["admin", "editor"]
+  repeated string zone_ids = 4;        // zone-scoped access
+  bool mfa_verified = 5;
+  campuscast.common.Timestamp issued_at = 6;
+  campuscast.common.Timestamp expires_at = 7;
+}
+
+message ValidateDeviceTokenRequest {
+  string device_token = 1;
+}
+
+message DeviceTokenClaims {
+  string device_id = 1;
+  string zone_id = 2;
+  string group_id = 3;
+  repeated string scopes = 4;          // e.g. ["player:read", "telemetry:write"]
+  campuscast.common.Timestamp expires_at = 5;
+}

@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package campuscast.device;
+
+import "common.proto";
+
+service DeviceManagementService {
+  rpc EnrollDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
+  rpc GetDevice(GetDeviceRequest) returns (Device);
+  rpc AssignDeviceToGroup(AssignDeviceRequest) returns (Device);
+  rpc ListDevicesByZone(ListDevicesByZoneRequest) returns (ListDevicesResponse);
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
+  rpc GetEnrollmentStatus(GetEnrollmentStatusRequest) returns (EnrollmentStatus);
+  rpc BindPublicKey(BindPublicKeyRequest) returns (BindPublicKeyResponse);
+  rpc GetJWKS(GetJWKSRequest) returns (JWKSResponse);
+}
+
+message EnrollDeviceRequest {
+  string device_name = 1;
+  string device_type = 2;          // "android_tv", "desktop", "web"
+  string hardware_id = 3;
+  string zone_id = 4;
+  string group_id = 5;
+}
+
+message EnrollDeviceResponse {
+  string device_id = 1;
+  string device_token = 2;
+  string mqtt_client_id = 3;
+  string mqtt_topic_prefix = 4;
+  campuscast.common.Timestamp token_expires_at = 5;
+}
+
+message GetDeviceRequest {
+  string device_id = 1;
+}
+
+message Device {
+  string device_id = 1;
+  string device_name = 2;
+  string device_type = 3;
+  string hardware_id = 4;
+  string zone_id = 5;
+  string group_id = 6;
+  string status = 7;               // "pending", "active", "revoked", "offline"
+  campuscast.common.Timestamp enrolled_at = 8;
+  campuscast.common.Timestamp last_seen = 9;
+}
+
+message AssignDeviceRequest {
+  string device_id = 1;
+  string group_id = 2;
+}
+
+message ListDevicesByZoneRequest {
+  string zone_id = 1;
+  campuscast.common.Pagination pagination = 2;
+}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+  campuscast.common.PaginatedResponse pagination = 2;
+}
+
+message RevokeDeviceRequest {
+  string device_id = 1;
+  string reason = 2;
+}
+
+message RevokeDeviceResponse {
+  bool success = 1;
+}
+
+message GetEnrollmentStatusRequest {
+  string device_id = 1;
+}
+
+message EnrollmentStatus {
+  string device_id = 1;
+  string status = 2;
+  bool key_bound = 3;
+  repeated string allowed_scopes = 4;
+}
+
+message BindPublicKeyRequest {
+  string device_id = 1;
+  bytes public_key = 2;
+  string algorithm = 3;
+}
+
+message BindPublicKeyResponse {
+  string key_id = 1;
+  bool success = 2;
+}
+
+message GetJWKSRequest {
+  string device_id = 1;
+}
+
+message JWKSResponse {
+  string jwks_json = 1;
+}

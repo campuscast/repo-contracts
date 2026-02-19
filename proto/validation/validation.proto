@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package campuscast.validation;
+
+import "common.proto";
+import "schedule/schedule.proto";
+
+service ValidationQaService {
+  rpc ValidateSchedule(ValidateScheduleRequest) returns (ValidateScheduleResponse);
+}
+
+message ValidateScheduleRequest {
+  string schedule_id = 1;
+  string zone_id = 2;
+  int32 version_number = 3;
+  repeated campuscast.schedule.ScheduleSlot slots = 4;
+  repeated string asset_ids = 5;   // referenced content assets to verify
+}
+
+message ValidateScheduleResponse {
+  bool valid = 1;
+  bool has_fatal = 2;
+  repeated campuscast.schedule.ValidationIssue issues = 3;
+}

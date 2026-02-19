@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package campuscast.content;
+
+import "common.proto";
+
+service ContentService {
+  rpc InitUpload(InitUploadRequest) returns (InitUploadResponse);
+  rpc CompleteUpload(CompleteUploadRequest) returns (ContentAsset);
+  rpc GetAsset(GetAssetRequest) returns (ContentAsset);
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
+  rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
+}
+
+message InitUploadRequest {
+  string zone_id = 1;
+  string filename = 2;
+  string content_type = 3;         // MIME type
+  int64 file_size = 4;
+  map<string, string> metadata = 5;
+}
+
+message InitUploadResponse {
+  string asset_id = 1;
+  string upload_url = 2;           // pre-signed S3 PUT url
+  campuscast.common.Timestamp expires_at = 3;
+}
+
+message CompleteUploadRequest {
+  string asset_id = 1;
+  string sha256_hash = 2;          // client-computed hash for verification
+}
+
+message ContentAsset {
+  string asset_id = 1;
+  string zone_id = 2;
+  string filename = 3;
+  string content_type = 4;
+  int64 file_size = 5;
+  string sha256_hash = 6;
+  string storage_key = 7;
+  string status = 8;               // "uploading", "ready", "deleted"
+  string signature = 9;            // base64-encoded signature
+  string key_id = 10;
+  map<string, string> metadata = 11;
+  campuscast.common.Timestamp created_at = 12;
+  campuscast.common.Timestamp updated_at = 13;
+}
+
+message GetAssetRequest {
+  string asset_id = 1;
+}
+
+message ListAssetsRequest {
+  string zone_id = 1;
+  campuscast.common.Pagination pagination = 2;
+}
+
+message ListAssetsResponse {
+  repeated ContentAsset assets = 1;
+  campuscast.common.PaginatedResponse pagination = 2;
+}
+
+message DeleteAssetRequest {
+  string asset_id = 1;
+}
+
+message DeleteAssetResponse {
+  bool success = 1;
+}
