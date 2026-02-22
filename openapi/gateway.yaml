@@ -104,23 +104,23 @@ paths:
                 $ref: '#/components/schemas/ZonePolicy'
 
   # ── Devices ──
-  /devices/enroll:
+  /devices/register:
     post:
       tags: [Devices]
-      summary: Enroll a new device
+      summary: Register a new device
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnrollDeviceRequest'
+              $ref: '#/components/schemas/RegisterDeviceRequest'
       responses:
         '201':
-          description: Device enrolled
+          description: Device registered
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EnrollDeviceResponse'
+                $ref: '#/components/schemas/RegisterDeviceResponse'
 
   /devices/{deviceId}:
     get:
@@ -291,8 +291,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockResponse'
-
-  /schedules/{scheduleId}/lock:
     delete:
       tags: [Schedule]
       summary: Release edit lock
@@ -450,6 +448,12 @@ paths:
         - name: resource_id
           in: query
           schema: { type: string }
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: actor_id
+          in: query
+          schema: { type: string }
         - name: from
           in: query
           schema: { type: string, format: date-time }
@@ -505,7 +509,7 @@ components:
         max_ops_per_minute: { type: integer }
         max_batch_size: { type: integer }
 
-    EnrollDeviceRequest:
+    RegisterDeviceRequest:
       type: object
       required: [device_name, device_type, zone_id, group_id]
       properties:
@@ -515,7 +519,7 @@ components:
         zone_id: { type: string }
         group_id: { type: string }
 
-    EnrollDeviceResponse:
+    RegisterDeviceResponse:
       type: object
       properties:
         device_id: { type: string }
