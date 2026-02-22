@@ -11,8 +11,12 @@
       "enum": [
         "schedule.ops_merged", "schedule.published", "schedule.lock_acquired", "schedule.lock_released",
         "schedule.invariant_violation", "schedule.auto_transform",
+        "schedule.publish_requested", "schedule.manifest_signed", "schedule.rollout_sent",
         "content.uploaded", "content.deleted", "content.signature_verified",
         "device.enrolled", "device.revoked", "device.key_bound",
+        "zone.created", "zone.updated", "zone.deleted",
+        "group.created", "group.deleted",
+        "policy.created", "policy.updated",
         "auth.login", "auth.logout", "auth.mfa_verified", "auth.token_refreshed",
         "security.rate_limited", "security.quota_exceeded", "security.signature_invalid",
         "security.schema_invalid", "security.access_denied",
