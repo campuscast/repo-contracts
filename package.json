@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "description": "Shared contracts: Protobuf definitions, OpenAPI specs, JSON schemas for Distributed Media CMS",
   "scripts": {
+    "validate:precheck": "node tools/validate-precheck.js",
     "proto:generate": "bash scripts/generate-proto.sh",
-    "openapi:validate": "npx @redocly/cli lint openapi/gateway.yaml",
-    "schemas:validate": "npx ajv-cli validate -s json-schemas/operations/schedule-op.schema.json -d json-schemas/operations/example-op.json"
+    "openapi:validate": "node tools/validate-openapi.js",
+    "schemas:validate": "node tools/validate-schemas.js",
+    "contracts:validate": "npm run openapi:validate && npm run schemas:validate",
+    "openapi:validate:strict": "npm run validate:precheck && redocly lint openapi/gateway.yaml",
+    "schemas:validate:strict": "npm run validate:precheck && ajv validate -s json-schemas/operations/schedule-op.schema.json -d json-schemas/operations/example-op.json"
   },
   "devDependencies": {
     "@redocly/cli": "^1.25.0",

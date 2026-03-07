@@ -1,0 +1,32 @@
+{
+  "op_type": "add_slot",
+  "causal": {
+    "operation_id": "11111111-1111-4111-8111-111111111111",
+    "client_id": "device-001",
+    "lamport_ts": 42,
+    "vector_clock": {
+      "device-001": 42
+    },
+    "session_id": "session-abc"
+  },
+  "signature": {
+    "signature": "c2lnbmF0dXJl",
+    "key_id": "operation-1111aaaa",
+    "algorithm": "Ed25519"
+  },
+  "slot": {
+    "slot_id": "22222222-2222-4222-8222-222222222222",
+    "asset_id": "asset-123",
+    "start_time": "2026-02-21T10:00:00.000Z",
+    "end_time": "2026-02-21T10:30:00.000Z",
+    "priority": 50,
+    "zone_id": "zone-1",
+    "group_id": "group-a",
+    "metadata": {
+      "source": "editor"
+    }
+  },
+  "params": {
+    "reason": "initial_add"
+  }
+}

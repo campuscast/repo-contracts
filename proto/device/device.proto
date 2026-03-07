@@ -5,6 +5,7 @@ package campuscast.device;
 import "common.proto";
 
 service DeviceManagementService {
+  rpc RegisterDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
   rpc EnrollDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
   rpc GetDevice(GetDeviceRequest) returns (Device);
   rpc AssignDeviceToGroup(AssignDeviceRequest) returns (Device);

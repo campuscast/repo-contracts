@@ -14,7 +14,7 @@ for proto in $PROTOS; do
   echo "  -> $(basename "$proto")"
 done
 
-npx grpc_tools_node_protoc \
+"$(cd "$(dirname "$0")/.." && pwd)/node_modules/.bin/grpc_tools_node_protoc" \
   --proto_path="$PROTO_DIR" \
   --ts_out="$OUT_DIR" \
   --grpc_out="grpc_js:$OUT_DIR" \
