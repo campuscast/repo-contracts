@@ -1,0 +1,34 @@
+name: Contracts CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  contracts-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate contracts (offline baseline)
+        run: npm run contracts:validate
+      - name: Precheck npm registry reachability (non-blocking)
+        run: node tools/validate-precheck.js
+      - name: Install dependencies for strict validators
+        id: strict_install
+        continue-on-error: true
+        run: npm ci
+      - name: Validate OpenAPI (strict)
+        if: steps.strict_install.outcome == 'success'
+        run: npm run openapi:validate:strict
+      - name: Validate JSON Schemas (strict)
+        if: steps.strict_install.outcome == 'success'
+        run: npm run schemas:validate:strict
+      - name: Strict validators skipped
+        if: steps.strict_install.outcome != 'success'
+        run: echo "::warning title=Strict validation skipped::npm install failed or network unavailable. Offline baseline already passed."

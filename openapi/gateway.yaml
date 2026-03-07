@@ -85,6 +85,52 @@ paths:
                 properties:
                   data: { type: array, items: { $ref: '#/components/schemas/Zone' } }
                   pagination: { $ref: '#/components/schemas/Pagination' }
+    post:
+      tags: [Zones]
+      summary: Create zone (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '201':
+          description: Zone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+
+  /zones/{zoneId}:
+    put:
+      tags: [Zones]
+      summary: Update zone (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Zone updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
 
   /zones/{zoneId}/policy:
     get:
@@ -102,25 +148,150 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ZonePolicy'
-
-  # ── Devices ──
-  /devices/enroll:
     post:
-      tags: [Devices]
-      summary: Enroll a new device
+      tags: [Zones]
+      summary: Create policy for zone (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnrollDeviceRequest'
+              $ref: '#/components/schemas/ZonePolicy'
       responses:
         '201':
-          description: Device enrolled
+          description: Zone policy created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EnrollDeviceResponse'
+                $ref: '#/components/schemas/ZonePolicy'
+    put:
+      tags: [Zones]
+      summary: Update policy for zone (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZonePolicy'
+      responses:
+        '200':
+          description: Zone policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZonePolicy'
+
+  /zones/{zoneId}/groups:
+    get:
+      tags: [Zones]
+      summary: List screen groups for zone (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Screen groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ScreenGroup' }
+    post:
+      tags: [Zones]
+      summary: Create screen group in zone (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          description: Screen group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenGroup'
+
+  /zones/{zoneId}/groups/{groupId}:
+    delete:
+      tags: [Zones]
+      summary: Delete screen group (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Group deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean }
+
+  /policy/check:
+    post:
+      tags: [Zones]
+      summary: Policy decision check (zone-scoped or admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCheckRequest'
+      responses:
+        '200':
+          description: Access decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyCheckResponse'
+
+  # ── Devices ──
+  /devices/register:
+    post:
+      tags: [Devices]
+      summary: Register a new device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '201':
+          description: Device registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDeviceResponse'
 
   /devices/{deviceId}:
     get:
@@ -291,8 +462,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockResponse'
-
-  /schedules/{scheduleId}/lock:
     delete:
       tags: [Schedule]
       summary: Release edit lock
@@ -313,10 +482,44 @@ paths:
         '200':
           description: Lock released
 
+  /schedules/{scheduleId}/save:
+    post:
+      tags: [Schedule]
+      summary: Save draft slots (core/locking mode)
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slots, lock_token]
+              properties:
+                slots:
+                  type: array
+                  items:
+                    type: object
+                lock_token:
+                  type: string
+      responses:
+        '200':
+          description: Updated schedule draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+
   /schedules/{scheduleId}/ops:
     post:
       tags: [Schedule]
-      summary: Ingest CRDT operations (CRDT mode)
+      summary: Ingest operations via sync pipeline
+      description: >
+        Public entrypoint for BPMN-04. Gateway forwards to sync-service pipeline
+        (signature verification, device trust, policy-check) before forwarding to schedule-service.
       parameters:
         - name: scheduleId
           in: path
@@ -391,6 +594,8 @@ paths:
     get:
       tags: [Player]
       summary: Get latest release for device
+      security:
+        - bearerAuth: []
       parameters:
         - name: device_id
           in: query
@@ -408,6 +613,8 @@ paths:
     get:
       tags: [Player]
       summary: Get signed manifest
+      security:
+        - bearerAuth: []
       parameters:
         - name: releaseId
           in: path
@@ -425,6 +632,8 @@ paths:
     post:
       tags: [Player]
       summary: Report player telemetry
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -448,6 +657,12 @@ paths:
           in: query
           schema: { type: string }
         - name: resource_id
+          in: query
+          schema: { type: string }
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: actor_id
           in: query
           schema: { type: string }
         - name: from
@@ -498,14 +713,42 @@ components:
     ZonePolicy:
       type: object
       properties:
+        id: { type: string }
         zone_id: { type: string }
         max_schedule_slots: { type: integer }
         max_content_size_mb: { type: integer }
+        allowed_content_types: { type: array, items: { type: string } }
         crdt_enabled: { type: boolean }
         max_ops_per_minute: { type: integer }
         max_batch_size: { type: integer }
+        priority_rules: { type: array, items: { type: object } }
+        updated_at: { type: string, format: date-time }
 
-    EnrollDeviceRequest:
+    ScreenGroup:
+      type: object
+      properties:
+        group_id: { type: string }
+        zone_id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+
+    PolicyCheckRequest:
+      type: object
+      required: [zone_id, action]
+      properties:
+        user_id: { type: string }
+        device_id: { type: string }
+        zone_id: { type: string }
+        action: { type: string }
+        resource_id: { type: string }
+
+    PolicyCheckResponse:
+      type: object
+      properties:
+        allowed: { type: boolean }
+        reason: { type: string }
+
+    RegisterDeviceRequest:
       type: object
       required: [device_name, device_type, zone_id, group_id]
       properties:
@@ -515,7 +758,7 @@ components:
         zone_id: { type: string }
         group_id: { type: string }
 
-    EnrollDeviceResponse:
+    RegisterDeviceResponse:
       type: object
       properties:
         device_id: { type: string }
