@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/auth/token-pair",
+  "title": "TokenPair",
+  "description": "Response from /auth/login and /auth/refresh",
+  "type": "object",
+  "required": ["access_token", "expires_in"],
+  "properties": {
+    "access_token": {
+      "type": "string",
+      "description": "JWT access token"
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "JWT refresh token (present on login, optionally on refresh)"
+    },
+    "expires_in": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Access token TTL in seconds"
+    }
+  },
+  "additionalProperties": false
+}

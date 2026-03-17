@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/auth/user-me",
+  "title": "UserMe",
+  "description": "Response from GET /me — canonical user profile for authenticated session",
+  "type": "object",
+  "required": ["user", "roles", "zones"],
+  "properties": {
+    "user": {
+      "type": "object",
+      "required": ["id", "email"],
+      "properties": {
+        "id": { "type": "string", "description": "User UUID" },
+        "email": { "type": "string", "description": "User email" },
+        "name": { "type": "string", "description": "Display name (optional)" }
+      },
+      "additionalProperties": false
+    },
+    "roles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Role names, e.g. ['admin', 'editor']"
+    },
+    "zones": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Zone IDs user has access to"
+    },
+    "crdt_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether any assigned zone has CRDT enabled"
+    }
+  },
+  "additionalProperties": false
+}

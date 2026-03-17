@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/auth/logout-response",
+  "title": "LogoutResponse",
+  "description": "Response from POST /auth/logout — stateless acknowledgement",
+  "type": "object",
+  "required": ["ok"],
+  "properties": {
+    "ok": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

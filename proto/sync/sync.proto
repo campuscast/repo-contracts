@@ -45,11 +45,14 @@ message WsInboundMessage {
 
 // Server -> Client
 message WsOutboundMessage {
-  string type = 1;                // "ops_applied", "ops_rejected", "snapshot", "compensating", "heartbeat_ack"
+  string type = 1;                // "ops_applied", "ops_rejected", "batch_rejected", "snapshot", "heartbeat_ack"
   string schedule_id = 2;
   repeated campuscast.schedule.ScheduleOp ops = 3;
   repeated campuscast.schedule.OpResult results = 4;
   campuscast.schedule.ScheduleSnapshot snapshot = 5;
   string correlation_id = 6;
   string error = 7;
+  int32 accepted = 8;             // count of accepted ops (ops_applied)
+  int32 rejected = 9;             // count of rejected ops (ops_applied)
+  string reason = 10;             // rejection reason (batch_rejected)
 }

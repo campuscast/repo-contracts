@@ -67,6 +67,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenPair'
 
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (stateless — clears server-side state if any)
+      responses:
+        '200':
+          description: Logout acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile from access token
+      responses:
+        '200':
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMe'
+        '401':
+          description: Invalid or expired token
+
   # ── Zones ──
   /zones:
     get:
@@ -697,10 +723,32 @@ components:
   schemas:
     TokenPair:
       type: object
+      required: [access_token, expires_in]
       properties:
         access_token: { type: string }
         refresh_token: { type: string }
         expires_in: { type: integer }
+
+    UserMe:
+      type: object
+      required: [user, roles, zones]
+      properties:
+        user:
+          type: object
+          required: [id, email]
+          properties:
+            id: { type: string }
+            email: { type: string }
+            name: { type: string }
+        roles: { type: array, items: { type: string } }
+        zones: { type: array, items: { type: string } }
+        crdt_enabled: { type: boolean, default: false }
+
+    LogoutResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
 
     Zone:
       type: object
@@ -911,27 +959,42 @@ components:
 
     Manifest:
       type: object
+      required: [release_id, schedule_id, zone_id, version_number, slots, assets, created_at]
       properties:
         release_id: { type: string }
         schedule_id: { type: string }
         zone_id: { type: string }
-        version: { type: integer }
-        files:
+        version_number: { type: integer }
+        slots:
           type: array
           items:
             type: object
             properties:
+              slot_id: { type: string }
               asset_id: { type: string }
-              filename: { type: string }
-              sha256_hash: { type: string }
-              download_url: { type: string }
-              size: { type: integer }
-        slots:
+              start_time: { type: string, format: date-time }
+              end_time: { type: string, format: date-time }
+              priority: { type: integer }
+              zone_id: { type: string }
+              group_id: { type: string }
+              metadata: { type: object }
+        assets:
           type: array
           items:
-            $ref: '#/components/schemas/ScheduleOp/properties/slot'
+            type: object
+            required: [asset_id, filename, sha256_hash, download_url]
+            properties:
+              asset_id: { type: string }
+              filename: { type: string }
+              content_type: { type: string }
+              file_size: { type: integer }
+              sha256_hash: { type: string }
+              download_url: { type: string, format: uri }
+              metadata: { type: object }
+        manifest_hash: { type: string }
         signature: { type: string }
         key_id: { type: string }
+        created_at: { type: string, format: date-time }
 
     TelemetryReport:
       type: object

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/manifest/release-manifest",
+  "title": "ReleaseManifest",
+  "description": "Canonical manifest shape served by schedule-service and consumed by desktop player",
+  "type": "object",
+  "required": ["release_id", "schedule_id", "zone_id", "version_number", "slots", "assets", "created_at"],
+  "properties": {
+    "release_id": { "type": "string" },
+    "schedule_id": { "type": "string" },
+    "zone_id": { "type": "string" },
+    "version_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schedule version number"
+    },
+    "slots": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScheduleSlot" }
+    },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ManifestAsset" },
+      "description": "Content assets referenced by slots, with download info"
+    },
+    "manifest_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of canonical manifest JSON"
+    },
+    "signature": { "type": "string", "description": "Cryptographic signature of manifest_hash" },
+    "key_id": { "type": "string", "description": "Signing key identifier" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ScheduleSlot": {
+      "type": "object",
+      "required": ["slot_id", "start_time", "end_time"],
+      "properties": {
+        "slot_id": { "type": "string" },
+        "asset_id": { "type": "string" },
+        "start_time": { "type": "string", "format": "date-time" },
+        "end_time": { "type": "string", "format": "date-time" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "zone_id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "metadata": { "type": "object" }
+      }
+    },
+    "ManifestAsset": {
+      "type": "object",
+      "required": ["asset_id", "filename", "sha256_hash", "download_url"],
+      "properties": {
+        "asset_id": { "type": "string" },
+        "filename": { "type": "string" },
+        "content_type": { "type": "string", "description": "MIME type" },
+        "file_size": { "type": "integer", "minimum": 0 },
+        "sha256_hash": { "type": "string" },
+        "download_url": { "type": "string", "format": "uri" },
+        "metadata": { "type": "object", "description": "Extensible metadata for publication editor and future integrations" }
+      }
+    }
+  }
+}

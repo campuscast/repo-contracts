@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campuscast.local/schemas/sync/ws-outbound",
+  "title": "WsOutboundMessage",
+  "description": "Server → Client WebSocket message envelope for sync protocol",
+  "type": "object",
+  "required": ["type", "correlation_id"],
+  "oneOf": [
+    {
+      "properties": {
+        "type": { "const": "ops_applied" },
+        "correlation_id": { "type": "string" },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["operation_id", "accepted"],
+            "properties": {
+              "operation_id": { "type": "string" },
+              "accepted": { "type": "boolean" },
+              "reason": { "type": "string" },
+              "explanation": { "type": "string" },
+              "compensating_ops": { "type": "array" }
+            }
+          }
+        }
+      },
+      "required": ["type", "correlation_id", "accepted", "rejected", "results"]
+    },
+    {
+      "properties": {
+        "type": { "const": "batch_rejected" },
+        "correlation_id": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "required": ["type", "correlation_id", "reason"]
+    },
+    {
+      "properties": {
+        "type": { "const": "ops_rejected" },
+        "correlation_id": { "type": "string" },
+        "error": { "type": "string" }
+      },
+      "required": ["type", "correlation_id", "error"]
+    },
+    {
+      "properties": {
+        "type": { "const": "snapshot" },
+        "correlation_id": { "type": "string" },
+        "schedule_id": { "type": "string" },
+        "epoch": { "type": "integer" },
+        "slots": { "type": "array" },
+        "snapshot_hash": { "type": "string" }
+      },
+      "required": ["type", "correlation_id", "schedule_id", "slots"]
+    },
+    {
+      "properties": {
+        "type": { "const": "heartbeat_ack" },
+        "correlation_id": { "type": "string" }
+      },
+      "required": ["type", "correlation_id"]
+    }
+  ]
+}

@@ -7,7 +7,8 @@
     "proto:generate": "bash scripts/generate-proto.sh",
     "openapi:validate": "node tools/validate-openapi.js",
     "schemas:validate": "node tools/validate-schemas.js",
-    "contracts:validate": "npm run openapi:validate && npm run schemas:validate",
+    "contracts:validate": "npm run openapi:validate && npm run schemas:validate && npm run contracts:check",
+    "contracts:check": "node tools/validate-contracts.js",
     "openapi:validate:strict": "npm run validate:precheck && redocly lint openapi/gateway.yaml",
     "schemas:validate:strict": "npm run validate:precheck && ajv validate -s json-schemas/operations/schedule-op.schema.json -d json-schemas/operations/example-op.json"
   },
