@@ -429,6 +429,97 @@ paths:
                   data: { type: array, items: { $ref: '#/components/schemas/ContentAsset' } }
                   pagination: { $ref: '#/components/schemas/Pagination' }
 
+  /publications:
+    get:
+      tags: [Content]
+      summary: List publications by zone
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Publication list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Publication' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+    post:
+      tags: [Content]
+      summary: Create publication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationCreateRequest'
+      responses:
+        '201':
+          description: Publication created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}:
+    get:
+      tags: [Content]
+      summary: Get publication details
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Publication details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+    patch:
+      tags: [Content]
+      summary: Update publication
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationUpdateRequest'
+      responses:
+        '200':
+          description: Publication updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+    delete:
+      tags: [Content]
+      summary: Archive publication
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Publication archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
   # ── Schedule ──
   /schedules:
     post:
@@ -570,6 +661,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IngestOpsResponse'
+
+  /schedules/{scheduleId}/ops/sign:
+    post:
+      tags: [Schedule]
+      summary: Sign schedule operations for editor session
+      description: >
+        Signs canonical schedule operation payloads for the authenticated editor user.
+        Returned ops include actor context + signature and can be sent to sync-service intake.
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ops]
+              properties:
+                ops:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ScheduleOp'
+      responses:
+        '200':
+          description: Signed operations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedOpsResponse'
 
   /schedules/{scheduleId}/publish:
     post:
@@ -853,6 +976,77 @@ components:
         signature: { type: string }
         key_id: { type: string }
 
+    PublicationItem:
+      type: object
+      properties:
+        item_id: { type: string }
+        type: { type: string, enum: [custom_slide, video_asset] }
+        title: { type: string }
+        duration_ms: { type: integer, minimum: 1000 }
+        transition:
+          type: object
+          properties:
+            type: { type: string, enum: [cut, fade] }
+            duration_ms: { type: integer, minimum: 0 }
+        slide:
+          type: object
+          properties:
+            background: { type: string }
+            title: { type: string }
+            body: { type: string }
+            image_asset_id: { type: string }
+            logo_asset_id: { type: string }
+            layout: { type: string, enum: [centered, split, title-top] }
+        video:
+          type: object
+          properties:
+            asset_id: { type: string }
+            trim_in_ms: { type: integer, minimum: 0 }
+            trim_out_ms: { type: integer, minimum: 0 }
+            mute: { type: boolean }
+            loop: { type: boolean }
+        metadata: { type: object }
+
+    Publication:
+      type: object
+      properties:
+        publication_id: { type: string }
+        zone_id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        status: { type: string, enum: [draft, active, archived] }
+        version: { type: integer, minimum: 1 }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PublicationItem' }
+        metadata: { type: object }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PublicationCreateRequest:
+      type: object
+      required: [zone_id, title]
+      properties:
+        zone_id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        status: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PublicationItem' }
+        metadata: { type: object }
+
+    PublicationUpdateRequest:
+      type: object
+      properties:
+        title: { type: string }
+        type: { type: string }
+        status: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PublicationItem' }
+        metadata: { type: object }
+
     Schedule:
       type: object
       properties:
@@ -877,6 +1071,13 @@ components:
             vector_clock: { type: object }
             parent_op_id: { type: string }
             session_id: { type: string }
+        actor:
+          type: object
+          properties:
+            auth_type: { type: string, enum: [user_session, device_token] }
+            user_id: { type: string }
+            device_id: { type: string }
+            session_id: { type: string }
         signature:
           type: object
           properties:
@@ -888,11 +1089,21 @@ components:
           properties:
             slot_id: { type: string }
             asset_id: { type: string }
+            publication_id: { type: string }
             start_time: { type: string, format: date-time }
             end_time: { type: string, format: date-time }
             priority: { type: integer }
             zone_id: { type: string }
             group_id: { type: string }
+
+    SignedOpsResponse:
+      type: object
+      required: [ops]
+      properties:
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleOp'
 
     IngestOpsResponse:
       type: object

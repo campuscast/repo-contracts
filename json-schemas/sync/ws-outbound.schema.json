@@ -52,7 +52,21 @@
         "schedule_id": { "type": "string" },
         "epoch": { "type": "integer" },
         "slots": { "type": "array" },
-        "snapshot_hash": { "type": "string" }
+        "snapshot_hash": { "type": "string" },
+        "last_operation_id": { "type": "string" },
+        "missing_ops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "op_type": { "type": "string" },
+              "operation_id": { "type": "string" },
+              "slot_data": { "type": "object" },
+              "lamport_ts": { "type": "integer" },
+              "client_id": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["type", "correlation_id", "schedule_id", "slots"]
     },

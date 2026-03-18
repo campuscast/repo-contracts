@@ -23,6 +23,11 @@
       "items": { "$ref": "#/$defs/ManifestAsset" },
       "description": "Content assets referenced by slots, with download info"
     },
+    "publications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ManifestPublication" },
+      "description": "Publication entities referenced by schedule slots"
+    },
     "manifest_hash": {
       "type": "string",
       "description": "SHA-256 hash of canonical manifest JSON"
@@ -39,6 +44,7 @@
       "properties": {
         "slot_id": { "type": "string" },
         "asset_id": { "type": "string" },
+        "publication_id": { "type": "string" },
         "start_time": { "type": "string", "format": "date-time" },
         "end_time": { "type": "string", "format": "date-time" },
         "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
@@ -58,6 +64,22 @@
         "sha256_hash": { "type": "string" },
         "download_url": { "type": "string", "format": "uri" },
         "metadata": { "type": "object", "description": "Extensible metadata for publication editor and future integrations" }
+      }
+    },
+    "ManifestPublication": {
+      "type": "object",
+      "required": ["publication_id", "zone_id", "title", "type", "status", "version", "items"],
+      "properties": {
+        "publication_id": { "type": "string" },
+        "zone_id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "metadata": { "type": "object" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
       }
     }
   }

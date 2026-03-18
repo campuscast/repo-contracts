@@ -22,7 +22,8 @@
       "properties": {
         "type": { "const": "sync_request" },
         "schedule_id": { "type": "string" },
-        "correlation_id": { "type": "string" }
+        "correlation_id": { "type": "string" },
+        "last_known_operation_id": { "type": "string" }
       },
       "required": ["type", "schedule_id", "correlation_id"]
     },

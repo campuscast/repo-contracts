@@ -13,6 +13,9 @@
     "causal": {
       "$ref": "#/$defs/CausalMetadata"
     },
+    "actor": {
+      "$ref": "#/$defs/ActorIdentity"
+    },
     "signature": {
       "$ref": "#/$defs/OperationSignature"
     },
@@ -49,12 +52,22 @@
         "algorithm": { "type": "string", "enum": ["Ed25519", "HMAC-SHA256"] }
       }
     },
+    "ActorIdentity": {
+      "type": "object",
+      "properties": {
+        "auth_type": { "type": "string", "enum": ["user_session", "device_token"] },
+        "user_id": { "type": "string" },
+        "device_id": { "type": "string" },
+        "session_id": { "type": "string" }
+      }
+    },
     "ScheduleSlot": {
       "type": "object",
       "required": ["slot_id", "start_time", "end_time"],
       "properties": {
         "slot_id": { "type": "string", "format": "uuid" },
         "asset_id": { "type": "string" },
+        "publication_id": { "type": "string" },
         "start_time": { "type": "string", "format": "date-time" },
         "end_time": { "type": "string", "format": "date-time" },
         "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
@@ -62,7 +75,7 @@
         "group_id": { "type": "string" },
         "metadata": {
           "type": "object",
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": true
         }
       }
     }
