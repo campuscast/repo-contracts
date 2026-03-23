@@ -997,6 +997,8 @@ components:
             image_asset_id: { type: string }
             logo_asset_id: { type: string }
             layout: { type: string, enum: [centered, split, title-top] }
+            image_fit: { type: string, enum: [cover, contain, stretch, center] }
+            text_overlay: { type: boolean }
         video:
           type: object
           properties:
