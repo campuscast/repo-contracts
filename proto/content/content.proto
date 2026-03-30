@@ -8,8 +8,12 @@ service ContentService {
   rpc InitUpload(InitUploadRequest) returns (InitUploadResponse);
   rpc CompleteUpload(CompleteUploadRequest) returns (ContentAsset);
   rpc GetAsset(GetAssetRequest) returns (ContentAsset);
+  rpc GetAssetInfo(GetAssetRequest) returns (ContentAssetInfo);
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
-  rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
+  rpc RenameAsset(RenameAssetRequest) returns (ContentAsset);
+  rpc UpdateAssetAvailability(UpdateAssetAvailabilityRequest) returns (ContentAssetInfo);
+  rpc PruneUnusedAvailability(PruneUnusedAvailabilityRequest) returns (ContentAssetInfo);
+  rpc DeleteAsset(DeleteAssetRequest) returns (ContentAsset);
 }
 
 message InitUploadRequest {
@@ -33,7 +37,7 @@ message CompleteUploadRequest {
 
 message ContentAsset {
   string asset_id = 1;
-  string zone_id = 2;
+  string zone_id = 2;             // upload/origin zone
   string filename = 3;
   string content_type = 4;
   int64 file_size = 5;
@@ -45,6 +49,18 @@ message ContentAsset {
   map<string, string> metadata = 11;
   campuscast.common.Timestamp created_at = 12;
   campuscast.common.Timestamp updated_at = 13;
+  repeated string zone_ids = 14;  // all zones where the asset is available
+}
+
+message ContentAssetUsageByZone {
+  string zone_id = 1;
+  int32 publication_count = 2;
+}
+
+message ContentAssetInfo {
+  ContentAsset asset = 1;
+  repeated ContentAssetUsageByZone usage_by_zone = 2;
+  repeated string unused_zone_ids = 3;
 }
 
 message GetAssetRequest {
@@ -52,8 +68,9 @@ message GetAssetRequest {
 }
 
 message ListAssetsRequest {
-  string zone_id = 1;
+  string zone_id = 1;             // legacy single-zone selector
   campuscast.common.Pagination pagination = 2;
+  repeated string zone_ids = 3;   // multi-zone selector
 }
 
 message ListAssetsResponse {
@@ -65,6 +82,16 @@ message DeleteAssetRequest {
   string asset_id = 1;
 }
 
-message DeleteAssetResponse {
-  bool success = 1;
+message RenameAssetRequest {
+  string asset_id = 1;
+  string filename = 2;
+}
+
+message UpdateAssetAvailabilityRequest {
+  string asset_id = 1;
+  repeated string zone_ids = 2;   // must leave the asset available in at least one zone
+}
+
+message PruneUnusedAvailabilityRequest {
+  string asset_id = 1;
 }

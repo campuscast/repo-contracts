@@ -21,7 +21,7 @@ message EnrollDeviceRequest {
   string device_type = 2;          // "android_tv", "desktop", "web"
   string hardware_id = 3;
   string zone_id = 4;
-  string group_id = 5;
+  string group_id = 5;             // optional: empty means device is not assigned to any group
 }
 
 message EnrollDeviceResponse {
@@ -42,7 +42,7 @@ message Device {
   string device_type = 3;
   string hardware_id = 4;
   string zone_id = 5;
-  string group_id = 6;
+  string group_id = 6;             // empty means device is not assigned to any group
   string status = 7;               // "pending", "active", "revoked", "offline"
   campuscast.common.Timestamp enrolled_at = 8;
   campuscast.common.Timestamp last_seen = 9;
@@ -50,7 +50,7 @@ message Device {
 
 message AssignDeviceRequest {
   string device_id = 1;
-  string group_id = 2;
+  string group_id = 2;             // empty means remove the group assignment
 }
 
 message ListDevicesByZoneRequest {

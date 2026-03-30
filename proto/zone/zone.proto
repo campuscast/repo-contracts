@@ -29,6 +29,7 @@ message ScreenGroup {
   string zone_id = 2;
   string name = 3;
   repeated string device_ids = 4;
+  string description = 5;
 }
 
 message ListZonesRequest {

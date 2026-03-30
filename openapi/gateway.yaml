@@ -123,7 +123,7 @@ paths:
               required: [name]
               properties:
                 name: { type: string }
-                description: { type: string }
+                description: { type: string, nullable: true }
       responses:
         '201':
           description: Zone created
@@ -251,6 +251,7 @@ paths:
               required: [name]
               properties:
                 name: { type: string }
+                description: { type: string, nullable: true }
       responses:
         '201':
           description: Screen group created
@@ -353,7 +354,7 @@ paths:
               type: object
               required: [group_id]
               properties:
-                group_id: { type: string }
+                group_id: { type: string, description: Empty string removes the current group assignment }
       responses:
         '200':
           description: Updated device
@@ -407,6 +408,126 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContentAsset'
 
+  /content/asset/{assetId}:
+    get:
+      tags: [Content]
+      summary: Get content asset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Asset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAsset'
+
+  /content/asset/{assetId}/info:
+    get:
+      tags: [Content]
+      summary: Get content asset availability and publication usage by zone
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Asset info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAssetInfo'
+
+  /content/{assetId}:
+    patch:
+      tags: [Content]
+      summary: Rename content asset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename]
+              properties:
+                filename: { type: string }
+      responses:
+        '200':
+          description: Asset updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAsset'
+    delete:
+      tags: [Content]
+      summary: Permanently delete content asset from the library and storage
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Asset deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAsset'
+
+  /content/{assetId}/availability:
+    patch:
+      tags: [Content]
+      summary: Update content asset zone availability; at least one zone must remain
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [zone_ids]
+              properties:
+                zone_ids:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200':
+          description: Asset availability updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAssetInfo'
+
+  /content/{assetId}/availability/prune-unused:
+    post:
+      tags: [Content]
+      summary: Remove content asset availability from every unused zone
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Asset availability pruned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentAssetInfo'
+
   /content:
     get:
       tags: [Content]
@@ -414,8 +535,14 @@ paths:
       parameters:
         - name: zone_id
           in: query
-          required: true
+          required: false
           schema: { type: string }
+        - name: zone_ids
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Comma-separated list of zone IDs
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -479,6 +606,29 @@ paths:
       responses:
         '200':
           description: Publication details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}/copy:
+    post:
+      tags: [Content]
+      summary: Copy publication into another zone and share referenced assets there
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationCopyRequest'
+      responses:
+        '200':
+          description: Publication copy created
           content:
             application/json:
               schema:
@@ -901,6 +1051,7 @@ components:
         group_id: { type: string }
         zone_id: { type: string }
         name: { type: string }
+        description: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
 
     PolicyCheckRequest:
@@ -921,13 +1072,13 @@ components:
 
     RegisterDeviceRequest:
       type: object
-      required: [device_name, device_type, zone_id, group_id]
+      required: [device_name, device_type, zone_id]
       properties:
         device_name: { type: string }
         device_type: { type: string, enum: [android_tv, desktop, web] }
         hardware_id: { type: string }
         zone_id: { type: string }
-        group_id: { type: string }
+        group_id: { type: string, nullable: true, description: Optional screen group assignment }
 
     RegisterDeviceResponse:
       type: object
@@ -944,7 +1095,7 @@ components:
         device_name: { type: string }
         device_type: { type: string }
         zone_id: { type: string }
-        group_id: { type: string }
+        group_id: { type: string, nullable: true, description: Empty when the device is not assigned to any screen group }
         status: { type: string, enum: [pending, active, revoked, offline] }
 
     InitUploadRequest:
@@ -968,13 +1119,38 @@ components:
       properties:
         asset_id: { type: string }
         zone_id: { type: string }
+        zone_ids:
+          type: array
+          items: { type: string }
         filename: { type: string }
         content_type: { type: string }
         file_size: { type: integer }
         sha256_hash: { type: string }
+        storage_key: { type: string }
         status: { type: string, enum: [uploading, ready, deleted] }
         signature: { type: string }
         key_id: { type: string }
+        metadata: { type: object }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ContentAssetUsageByZone:
+      type: object
+      properties:
+        zone_id: { type: string }
+        publication_count: { type: integer, minimum: 0 }
+
+    ContentAssetInfo:
+      type: object
+      properties:
+        asset:
+          $ref: '#/components/schemas/ContentAsset'
+        usage_by_zone:
+          type: array
+          items: { $ref: '#/components/schemas/ContentAssetUsageByZone' }
+        unused_zone_ids:
+          type: array
+          items: { type: string }
 
     PublicationItem:
       type: object
@@ -1048,6 +1224,13 @@ components:
           type: array
           items: { $ref: '#/components/schemas/PublicationItem' }
         metadata: { type: object }
+
+    PublicationCopyRequest:
+      type: object
+      required: [zone_id, title]
+      properties:
+        zone_id: { type: string }
+        title: { type: string }
 
     Schedule:
       type: object
