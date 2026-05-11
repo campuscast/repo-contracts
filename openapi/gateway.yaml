@@ -283,6 +283,39 @@ paths:
                 properties:
                   deleted: { type: boolean }
 
+  /zones/{zoneId}/groups/{groupId}/layout:
+    put:
+      tags: [Zones]
+      summary: Update screen group composition layout (admin)
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ScreenGroupLayoutItem'
+      responses:
+        '200':
+          description: Screen group layout updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenGroup'
+
   /policy/check:
     post:
       tags: [Zones]
@@ -336,6 +369,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Device'
+
+  /devices/{deviceId}/runtime:
+    get:
+      tags: [Devices]
+      summary: Get latest runtime state for a device
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Device runtime state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRuntime'
+
+  /devices/{deviceId}/preview:
+    get:
+      tags: [Devices]
+      summary: Get latest player screenshot/preview
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Latest device preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePreview'
+
+  /devices/{deviceId}/preview-request:
+    post:
+      tags: [Devices]
+      summary: Request a fresh screenshot from a device screen
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_id: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Screenshot request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePreviewRequestResponse'
 
   /devices/{deviceId}/assign:
     put:
@@ -555,6 +647,11 @@ paths:
                 properties:
                   data: { type: array, items: { $ref: '#/components/schemas/ContentAsset' } }
                   pagination: { $ref: '#/components/schemas/Pagination' }
+                  publication_usage_by_asset:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                      minimum: 0
 
   /publications:
     get:
@@ -610,29 +707,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Publication'
-
-  /publications/{publicationId}/copy:
-    post:
-      tags: [Content]
-      summary: Copy publication into another zone and share referenced assets there
-      parameters:
-        - name: publicationId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PublicationCopyRequest'
-      responses:
-        '200':
-          description: Publication copy created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Publication'
     patch:
       tags: [Content]
       summary: Update publication
@@ -669,6 +743,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}/copy:
+    post:
+      tags: [Content]
+      summary: Copy publication into another zone and share referenced assets there
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationCopyRequest'
+      responses:
+        '200':
+          description: Publication copy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}/restore:
+    post:
+      tags: [Content]
+      summary: Restore archived publication
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Publication restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}/permanent:
+    delete:
+      tags: [Content]
+      summary: Permanently delete publication
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Publication permanently deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationDeleteResponse'
 
   # ── Schedule ──
   /schedules:
@@ -940,8 +1071,36 @@ paths:
             schema:
               $ref: '#/components/schemas/TelemetryReport'
       responses:
-        '204':
-          description: Accepted
+        '200':
+          description: Runtime accepted and optional device command returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerTelemetryResponse'
+
+  /player/preview:
+    post:
+      tags: [Player]
+      summary: Upload a player screenshot/preview frame
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePreviewUpload'
+      responses:
+        '200':
+          description: Preview stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preview_id: { type: string }
+                  device_id: { type: string }
+                  updated_at: { type: string, format: date-time, nullable: true }
 
   # ── Audit ──
   /audit:
@@ -1052,7 +1211,22 @@ components:
         zone_id: { type: string }
         name: { type: string }
         description: { type: string, nullable: true }
+        layout_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScreenGroupLayoutItem'
         created_at: { type: string, format: date-time }
+
+    ScreenGroupLayoutItem:
+      type: object
+      required: [device_id, display_id, x, y, width, height]
+      properties:
+        device_id: { type: string }
+        display_id: { type: string }
+        x: { type: number }
+        y: { type: number }
+        width: { type: integer }
+        height: { type: integer }
 
     PolicyCheckRequest:
       type: object
@@ -1097,6 +1271,95 @@ components:
         zone_id: { type: string }
         group_id: { type: string, nullable: true, description: Empty when the device is not assigned to any screen group }
         status: { type: string, enum: [pending, active, revoked, offline] }
+
+    DeviceDisplay:
+      type: object
+      properties:
+        id: { type: string }
+        label: { type: string }
+        width: { type: integer, minimum: 0 }
+        height: { type: integer, minimum: 0 }
+        selected: { type: boolean }
+
+    ScreenshotRequest:
+      type: object
+      properties:
+        request_id: { type: string }
+        display_id: { type: string }
+        requested_at: { type: string, format: date-time }
+
+    DeviceRuntime:
+      type: object
+      properties:
+        device_id: { type: string }
+        device_name: { type: string }
+        zone_id: { type: string }
+        group_id: { type: string, nullable: true }
+        status: { type: string }
+        current_release_id: { type: string, nullable: true }
+        current_slot_id: { type: string, nullable: true }
+        current_publication_id: { type: string, nullable: true }
+        current_publication_title: { type: string, nullable: true }
+        current_publication_item_id: { type: string, nullable: true }
+        current_publication_item_title: { type: string, nullable: true }
+        playback_status: { type: string, nullable: true }
+        online: { type: boolean, nullable: true }
+        backend_status: { type: string, nullable: true }
+        mqtt_status: { type: string, nullable: true }
+        last_error: { type: string, nullable: true }
+        last_telemetry_at: { type: string, format: date-time, nullable: true }
+        displays:
+          type: array
+          items: { $ref: '#/components/schemas/DeviceDisplay' }
+        selected_display_ids:
+          type: array
+          items: { type: string }
+        screenshot_request:
+          allOf:
+            - $ref: '#/components/schemas/ScreenshotRequest'
+          nullable: true
+
+    DevicePreview:
+      type: object
+      properties:
+        device_id: { type: string }
+        device_name: { type: string }
+        zone_id: { type: string }
+        group_id: { type: string, nullable: true }
+        preview_available: { type: boolean }
+        image_base64: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        mime_type: { type: string }
+        status: { type: string, nullable: true }
+        captured_at: { type: string, format: date-time, nullable: true }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+        display_id: { type: string, nullable: true }
+        display_label: { type: string, nullable: true }
+        request_id: { type: string, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+
+    DevicePreviewRequestResponse:
+      type: object
+      properties:
+        device_id: { type: string }
+        request_id: { type: string }
+        display_id: { type: string }
+        requested_at: { type: string, format: date-time }
+
+    DevicePreviewUpload:
+      type: object
+      properties:
+        image_base64: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        mime_type: { type: string }
+        captured_at: { type: string, format: date-time, nullable: true }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+        status: { type: string, nullable: true }
+        display_id: { type: string, nullable: true }
+        display_label: { type: string, nullable: true }
+        request_id: { type: string, nullable: true }
 
     InitUploadRequest:
       type: object
@@ -1171,6 +1434,7 @@ components:
             title: { type: string }
             body: { type: string }
             image_asset_id: { type: string }
+            external_url: { type: string }
             logo_asset_id: { type: string }
             layout: { type: string, enum: [centered, split, title-top] }
             image_fit: { type: string, enum: [cover, contain, stretch, center] }
@@ -1231,6 +1495,14 @@ components:
       properties:
         zone_id: { type: string }
         title: { type: string }
+
+    PublicationDeleteResponse:
+      type: object
+      required: [deleted, publication_id, zone_id]
+      properties:
+        deleted: { type: boolean }
+        publication_id: { type: string }
+        zone_id: { type: string }
 
     Schedule:
       type: object
@@ -1397,10 +1669,33 @@ components:
       required: [device_id]
       properties:
         device_id: { type: string }
-        current_release_id: { type: string }
-        playback_status: { type: string }
-        uptime_seconds: { type: integer }
+        current_release_id: { type: string, nullable: true }
+        current_slot_id: { type: string, nullable: true }
+        current_publication_id: { type: string, nullable: true }
+        current_publication_title: { type: string, nullable: true }
+        current_publication_item_id: { type: string, nullable: true }
+        current_publication_item_title: { type: string, nullable: true }
+        playback_status: { type: string, nullable: true }
         errors: { type: array, items: { type: string } }
+        displays:
+          type: array
+          items: { $ref: '#/components/schemas/DeviceDisplay' }
+        selected_displays:
+          type: array
+          items: { type: string }
+        timestamp: { type: string, format: date-time, nullable: true }
+        online: { type: boolean, nullable: true }
+        backend_status: { type: string, nullable: true }
+        mqtt_status: { type: string, nullable: true }
+        last_error: { type: string, nullable: true }
+
+    PlayerTelemetryResponse:
+      type: object
+      properties:
+        screenshot_request:
+          allOf:
+            - $ref: '#/components/schemas/ScreenshotRequest'
+          nullable: true
 
     Pagination:
       type: object

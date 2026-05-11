@@ -8,6 +8,8 @@ service DeviceManagementService {
   rpc RegisterDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
   rpc EnrollDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
   rpc GetDevice(GetDeviceRequest) returns (Device);
+  rpc GetDeviceRuntime(GetDeviceRequest) returns (DeviceRuntime);
+  rpc RequestDeviceScreenshot(RequestDeviceScreenshotRequest) returns (RequestDeviceScreenshotResponse);
   rpc AssignDeviceToGroup(AssignDeviceRequest) returns (Device);
   rpc ListDevicesByZone(ListDevicesByZoneRequest) returns (ListDevicesResponse);
   rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
@@ -46,6 +48,55 @@ message Device {
   string status = 7;               // "pending", "active", "revoked", "offline"
   campuscast.common.Timestamp enrolled_at = 8;
   campuscast.common.Timestamp last_seen = 9;
+}
+
+message DeviceDisplay {
+  string id = 1;
+  string label = 2;
+  int32 width = 3;
+  int32 height = 4;
+  bool selected = 5;
+}
+
+message ScreenshotRequest {
+  string request_id = 1;
+  string display_id = 2;
+  campuscast.common.Timestamp requested_at = 3;
+}
+
+message DeviceRuntime {
+  string device_id = 1;
+  string device_name = 2;
+  string zone_id = 3;
+  string group_id = 4;
+  string status = 5;
+  string current_release_id = 6;
+  string current_slot_id = 7;
+  string current_publication_id = 8;
+  string current_publication_title = 9;
+  string current_publication_item_id = 10;
+  string current_publication_item_title = 11;
+  string playback_status = 12;
+  bool online = 13;
+  string backend_status = 14;
+  string mqtt_status = 15;
+  string last_error = 16;
+  campuscast.common.Timestamp last_telemetry_at = 17;
+  repeated DeviceDisplay displays = 18;
+  repeated string selected_display_ids = 19;
+  ScreenshotRequest screenshot_request = 20;
+}
+
+message RequestDeviceScreenshotRequest {
+  string device_id = 1;
+  string display_id = 2; // optional: empty selects the primary playback display for the device
+}
+
+message RequestDeviceScreenshotResponse {
+  string device_id = 1;
+  string request_id = 2;
+  string display_id = 3;
+  campuscast.common.Timestamp requested_at = 4;
 }
 
 message AssignDeviceRequest {

@@ -76,6 +76,7 @@ message ListAssetsRequest {
 message ListAssetsResponse {
   repeated ContentAsset assets = 1;
   campuscast.common.PaginatedResponse pagination = 2;
+  map<string, int32> publication_usage_by_asset = 3;
 }
 
 message DeleteAssetRequest {
